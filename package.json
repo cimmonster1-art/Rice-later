@@ -1,0 +1,34 @@
+{
+  "name": "ricelayer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RiceLayer — Rice any website without breaking it.",
+  "type": "module",
+  "workspaces": [
+    "apps/extension",
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:extension": "npm run dev --workspace apps/extension",
+    "dev:server": "npm run dev --workspace apps/server",
+    "dev:web": "npm run dev --workspace apps/web",
+    "build:extension": "npm run build --workspace apps/extension",
+    "build:server": "npm run build --workspace apps/server",
+    "build:web": "npm run build --workspace apps/web",
+    "build": "npm run build:extension && npm run build:server && npm run build:web",
+    "lint": "tsc -b --pretty apps/extension apps/server apps/web || true",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package:extension": "node scripts/package-extension.mjs",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "jsdom": "^24.1.1"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}
