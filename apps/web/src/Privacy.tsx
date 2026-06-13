@@ -5,10 +5,17 @@ export function Privacy() {
       <p className="muted">Last updated: 2026-06-13</p>
 
       <p>
-        RiceLayer is built privacy-first. Our core promise is that we change how
-        a website <em>looks</em>, never how it works, and never by reading your
-        private data.
+        RiceLayer is built privacy-first and is free and open source. Our core
+        promise is that we change how a website <em>looks</em>, never how it
+        works, and never by reading your private data.
       </p>
+
+      <h2>Purpose</h2>
+      <ul>
+        <li>Extension functionality</li>
+        <li>Safe AI-generated theme creation</li>
+        <li>Abuse prevention / rate limiting if the backend is used</li>
+      </ul>
 
       <h2>What RiceLayer does NOT do</h2>
       <ul>

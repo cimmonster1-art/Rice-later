@@ -38,7 +38,6 @@ describe("promptBuilder", () => {
       prompt: "make it cyberpunk",
       hostname: "example.com",
       pageSummary: summary,
-      userTier: "free",
     });
     expect(p).toMatch(/CSS ONLY/i);
     expect(p).toMatch(/No <script>/i);
@@ -52,7 +51,6 @@ describe("promptBuilder", () => {
       prompt: "x",
       hostname: "example.com",
       pageSummary: summary,
-      userTier: "free",
     });
     expect(p).toMatch(/elementCounts/);
     expect(p).not.toMatch(/<html/i);
@@ -64,7 +62,6 @@ describe("promptBuilder", () => {
       prompt: "x",
       hostname: "bank.com",
       pageSummary: { ...summary, hasPasswordFields: true, hasSensitiveForms: true },
-      userTier: "free",
     });
     expect(p).toMatch(/sensitive forms/i);
     expect(p).toMatch(/hasPasswordFields/);

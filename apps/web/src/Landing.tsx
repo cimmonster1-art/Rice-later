@@ -11,10 +11,17 @@ export function Landing() {
           preserves functionality, and remembers your preferences per site.
         </p>
         <div className="cta-row">
-          <a className="btn primary" href="#/pricing">Get RiceLayer</a>
-          <a className="btn ghost" href="#install">Install unpacked dev build</a>
+          <a className="btn primary" href="#install">Install RiceLayer</a>
+          <a
+            className="btn ghost"
+            href="https://github.com/cimmonster1-art/rice-later"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View source on GitHub
+          </a>
         </div>
-        <p className="micro">Chrome Web Store: coming soon · Load unpacked today.</p>
+        <p className="micro">Free &amp; open source · Chrome Web Store coming soon · Load unpacked today.</p>
       </section>
 
       <section className="features">
@@ -42,6 +49,21 @@ export function Landing() {
           Cyberpunk Neon, Hacker Terminal, NASA Mission Control, Dark Academia,
           Glass SaaS, Brutalist Mono, and more — no AI required.
         </Feature>
+      </section>
+
+      <section className="free-forever">
+        <h2>Free Forever</h2>
+        <p className="sub">
+          RiceLayer is an open browser utility that gives users control over the
+          visual interfaces they use every day.
+        </p>
+        <div className="free-points">
+          <span>No subscriptions.</span>
+          <span>No ads.</span>
+          <span>No paywalls.</span>
+          <span>No upsells.</span>
+        </div>
+        <p className="micro">Just interface customization. Every feature, for everyone.</p>
       </section>
 
       <section className="beforeafter">

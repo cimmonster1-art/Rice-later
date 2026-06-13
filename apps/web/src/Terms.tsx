@@ -5,8 +5,10 @@ export function Terms() {
       <p className="muted">Last updated: 2026-06-13</p>
 
       <p>
-        By using RiceLayer you agree to these terms. RiceLayer modifies the
-        presentation of third-party websites in your own browser using CSS only.
+        By using RiceLayer you agree to these terms. RiceLayer is free and open
+        source, and modifies the presentation of third-party websites in your
+        own browser using CSS only. There is no account, subscription, or
+        payment of any kind.
       </p>
 
       <h2>Third-party websites</h2>
@@ -36,13 +38,6 @@ export function Terms() {
         Some sites use Shadow DOM, iframes, or highly dynamic rendering that may
         limit results. AI-generated themes are CSS-only and may need manual
         adjustment.
-      </p>
-
-      <h2>Billing</h2>
-      <p>
-        RiceLayer Pro is billed at <strong>$2.99/month</strong>. You can cancel
-        anytime through the billing portal; access continues until the end of
-        the current billing period. Prices are exclusive of applicable taxes.
       </p>
 
       <h2>Disclaimer of warranty</h2>

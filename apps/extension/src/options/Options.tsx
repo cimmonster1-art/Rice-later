@@ -37,9 +37,11 @@ export default function Options() {
           <span className="rl-logo">◢◤</span>
           <span className="rl-name">{APP_NAME} — Options</span>
         </div>
-        <span className={`rl-badge ${state.proStatus}`}>{state.proStatus.toUpperCase()}</span>
       </header>
       <p className="rl-mono" style={{ marginTop: 0 }}>{TAGLINE}</p>
+      <p className="rl-mono" style={{ marginTop: 0, color: "var(--lime)" }}>
+        Free &amp; open source · every feature included
+      </p>
 
       <h3 style={{ color: "var(--cyan)" }}>Preferences</h3>
       <div className="rl-options" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
@@ -68,6 +70,40 @@ export default function Options() {
           Don&apos;t auto-apply on sensitive (banking/login/health) sites
         </label>
       </div>
+
+      <h3 style={{ color: "var(--cyan)" }}>Advanced (optional)</h3>
+      <label style={{ display: "block", marginBottom: 6 }}>
+        Priority access key
+        <input
+          type="password"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="only for a self-hosted backend"
+          value={state.priorityAccessKey ?? ""}
+          onChange={(e) =>
+            update((s) => {
+              const v = e.target.value.trim();
+              if (v) s.priorityAccessKey = v;
+              else delete s.priorityAccessKey;
+            })
+          }
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 6,
+            padding: "8px 10px",
+            background: "var(--panel)",
+            border: "1px solid var(--line)",
+            borderRadius: 6,
+            color: "var(--fg)",
+            fontFamily: "var(--mono)",
+          }}
+        />
+      </label>
+      <p className="rl-mono" style={{ color: "var(--muted)", marginTop: 0 }}>
+        Stored locally only. Not required — it lets the project owner bypass the
+        shared AI budget throttle on their own server.
+      </p>
 
       <h3 style={{ color: "var(--cyan)" }}>Saved sites ({sites.length})</h3>
       {sites.length === 0 && <p className="rl-mono">no saved sites yet</p>}

@@ -14,8 +14,6 @@ export interface Preset {
   id: string;
   name: string;
   description: string;
-  /** True when only available on the Pro tier. */
-  pro?: boolean;
   css: string;
 }
 

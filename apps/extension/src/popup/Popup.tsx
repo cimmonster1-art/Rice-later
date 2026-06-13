@@ -24,8 +24,6 @@ function send<T = unknown>(msg: RiceMessage): Promise<RiceResponse<T>> {
   });
 }
 
-type Tier = "free" | "pro";
-
 export default function Popup() {
   const [status, setStatus] = useState<PageStatus | null>(null);
   const [prompt, setPrompt] = useState("");
@@ -34,7 +32,6 @@ export default function Popup() {
   const [safety, setSafety] = useState<SafetyResult | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
   const [saveForSite, setSaveForSite] = useState(false);
-  const [tier, setTier] = useState<Tier>("free");
   const [globalEnabled, setGlobalEnabled] = useState(true);
 
   const hostname = status?.hostname ?? "—";
@@ -47,7 +44,6 @@ export default function Popup() {
       setShowOriginal(resp.data.showingOriginal);
     }
     const state = await getState();
-    setTier(state.proStatus);
     setGlobalEnabled(state.globalEnabled);
   }, []);
 
@@ -149,14 +145,6 @@ export default function Popup() {
     if (!next) await reset();
   }
 
-  async function toggleTier() {
-    const next: Tier = tier === "pro" ? "free" : "pro";
-    setTier(next);
-    const state = await getState();
-    state.proStatus = next;
-    await setState(state);
-  }
-
   return (
     <div className="rl-root">
       <header className="rl-header">
@@ -164,13 +152,6 @@ export default function Popup() {
           <span className="rl-logo">◢◤</span>
           <span className="rl-name">{APP_NAME}</span>
         </div>
-        <button
-          className={`rl-badge ${tier}`}
-          onClick={toggleTier}
-          title="Dev: toggle tier"
-        >
-          {tier === "pro" ? "PRO" : "FREE"}
-        </button>
       </header>
 
       <div className="rl-domainbar">

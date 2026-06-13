@@ -2,6 +2,11 @@
 
 **Rice any website without breaking it.**
 
+> **RiceLayer is free and open source.** The project exists to give users
+> control over the interfaces they use every day. No subscriptions. No ads.
+> No paywalls. Every feature is available to everyone, and no account is
+> required for local use.
+
 RiceLayer is "ricing for web interfaces." Click the extension, type a
 natural-language command — *"make this cyberpunk,"* *"turn this into a green
 hacker terminal,"* *"make this ugly university portal readable"* — and the
@@ -20,7 +25,7 @@ login, cart, and workflow keeps working.
   back automatically** if a theme would break it.
 - ✅ A privacy-first backend that talks to **Google Gemini** for AI themes and
   returns **strict JSON** (CSS only — no JavaScript, ever).
-- ✅ Per-site saved preferences, presets that work with no AI, and a Pro tier.
+- ✅ Per-site saved preferences and presets that work with no AI — all free.
 - ❌ Not a website builder, not a page rebuilder, not a scraper. It never
   generates or injects JavaScript and never reads form/password/payment values.
 
@@ -44,7 +49,7 @@ login, cart, and workflow keeps working.
          ▼
 ┌──────────────── Backend (Node + Express, TypeScript) ──────────────────┐
 │  POST /api/generate-theme                                              │
-│   1 entitlement  2 rate limit  3 promptBuilder (privacy-preserving)    │
+│   1 rate limit  2 monthly budget cap  3 promptBuilder (privacy-safe)   │
 │   4 Gemini (strict JSON)  5 zod validate  6 cssSanitizer  7 return     │
 │  GEMINI_API_KEY is read ONLY here, from process.env — never in browser │
 └────────────────────────────────────────────────────────────────────────┘
@@ -62,10 +67,10 @@ apps/
   extension/    MV3 extension (React popup/options, content + background)
     src/
       popup/ options/ background/ content/ shared/
-  server/       Express API, Gemini provider, Stripe scaffold, sanitizer
+  server/       Express API, Gemini provider, budget guard, sanitizer
     src/
       routes/ services/ schemas/ middleware/
-  web/          Landing + Pricing + Privacy + Terms (Vite/React)
+  web/          Landing + Privacy + Terms (Vite/React)
 scripts/        package-extension.mjs, smoke-test.mjs
 tests/          cross-cutting security tests
 ```
@@ -166,22 +171,34 @@ npm run smoke               # builds + safety/permission/sanitizer checks + zip
 
 ---
 
-## Free vs Pro
+## Free and open source
 
-| | Free | Pro — **$2.99/mo** |
-|---|---|---|
-| Local presets | ✅ all 8 | ✅ |
-| Saved websites | 1 | unlimited |
-| AI prompt-to-theme | 1 trial | unlimited |
-| Per-site auto-apply | — | ✅ |
-| Generated CSS editor | — | ✅ |
-| Theme import/export | — | ✅ |
-| Accessibility / rescue modes | basic | ✅ |
-| Sync-ready storage | — | ✅ |
+RiceLayer is free for everyone — there are no tiers, accounts, or paywalls.
+Every feature ships to every user:
 
-Billing is a Stripe scaffold (`/api/billing/*`) gated behind
-`STRIPE_SECRET_KEY`. Entitlement lives in `services/entitlement.ts` with a clean
-seam for a DB; `DEV_FORCE_TIER=pro` unlocks Pro locally without Stripe.
+- AI prompt-to-theme generation · unlimited generated themes
+- Unlimited saved websites · unlimited presets · per-site memory
+- Per-site auto-apply · theme editing · import/export
+- Before/after comparison · function-safety validation
+- Accessibility and rescue modes · local presets · theme history
+
+### Keeping shared AI costs bounded (not gated)
+
+The only thing the backend limits is **cost**, never features. The shared,
+cloud-backed AI provider is protected by a hard **monthly budget cap**
+(`MONTHLY_BUDGET_USD`, default **$20/month**) plus a per-IP rate limit. When no
+paid provider key is set, the free local mock provider is used and there is no
+spend to meter at all.
+
+- `services/usageBudget.ts` tracks estimated spend per calendar month and resets
+  automatically. Anonymous traffic draws on `MONTHLY_BUDGET_USD − PRIORITY_RESERVE_USD`.
+- `services/priorityAccess.ts` lets the project owner keep **priority access**
+  to the reserved budget via a secret key (`PRIORITY_ACCESS_KEYS`) sent as the
+  `x-ricelayer-key` header — entered in the extension Options page. No key is
+  ever required for normal anonymous use.
+
+Presets, saved themes, and every local feature keep working even when the shared
+AI budget is exhausted.
 
 ---
 
@@ -215,8 +232,8 @@ seam for a DB; `DEV_FORCE_TIER=pro` unlocks Pro locally without Stripe.
 ## Roadmap
 
 - Shadow DOM piercing for component-heavy apps.
-- Generated-CSS editor with live diffing (Pro).
-- Cloud sync of saved themes (Supabase seam already in the storage abstraction).
+- Generated-CSS editor with live diffing.
+- Optional cloud sync of saved themes (seam already in the storage abstraction).
 - Community preset gallery + import/export.
 - Per-element targeted ricing.
 
@@ -230,3 +247,17 @@ seam for a DB; `DEV_FORCE_TIER=pro` unlocks Pro locally without Stripe.
 - The AI is constrained to **strict JSON / CSS only** and the output is
   sanitized server-side and twice more on the extension side.
 - No AI-generated JavaScript is ever injected.
+
+---
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) and open a
+[bug report](.github/ISSUE_TEMPLATE/bug_report.md) or
+[feature request](.github/ISSUE_TEMPLATE/feature_request.md).
+
+## License
+
+RiceLayer is released under the [MIT License](LICENSE). It is a free browser
+utility for ricing the web — no subscriptions, no monetization, and no account
+required for local usage.

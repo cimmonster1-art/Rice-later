@@ -4,14 +4,14 @@
  * Express server exposing:
  *   GET  /api/health
  *   POST /api/generate-theme
- *   POST /api/billing/create-checkout-session
- *   POST /api/billing/create-portal-session
- *   POST /api/billing/webhook   (raw body)
+ *
+ * RiceLayer is free and open source — there is no billing, account, or
+ * subscription layer. The only backend job is safe, budget-capped AI theme
+ * generation.
  */
 import express from "express";
 import { healthRouter } from "./routes/health.js";
 import { generateThemeRouter } from "./routes/generateTheme.js";
-import { billingRouter } from "./routes/billing.js";
 import { securityHeaders, cors } from "./middleware/security.js";
 import { createThemeProvider } from "./services/geminiThemeGenerator.js";
 
@@ -20,17 +20,10 @@ export function createApp(): express.Express {
 
   app.use(securityHeaders);
   app.use(cors);
-
-  // The Stripe webhook needs the raw body, so mount billing BEFORE json()
-  // for that path. express.json() is applied to everything else.
-  app.use((req, res, next) => {
-    if (req.originalUrl === "/api/billing/webhook") return next();
-    return express.json({ limit: "256kb" })(req, res, next);
-  });
+  app.use(express.json({ limit: "256kb" }));
 
   app.use("/api", healthRouter);
   app.use("/api", generateThemeRouter);
-  app.use("/api", billingRouter);
 
   app.get("/", (_req, res) => {
     res.json({ name: "RiceLayer API", status: "ok" });

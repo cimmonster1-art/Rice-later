@@ -38,6 +38,13 @@ export const API_BASE_URL = readApiBase();
 
 export const GENERATE_THEME_ENDPOINT = `${API_BASE_URL}/api/generate-theme`;
 
+/**
+ * Optional HTTP header carrying a priority-access key. RiceLayer is free for
+ * everyone; this only lets the project owner bypass the shared budget throttle
+ * on their own self-hosted backend. It is never required for normal use.
+ */
+export const PRIORITY_KEY_HEADER = "x-ricelayer-key";
+
 /** chrome.storage key under which all RiceLayer state lives. */
 export const STORAGE_KEY = "ricelayer_state_v1";
 
@@ -64,7 +71,3 @@ export const SENSITIVE_HOST_HINTS = [
   "signin",
   "account",
 ];
-
-/** Free-tier limits. */
-export const FREE_MAX_SAVED_SITES = 1;
-export const FREE_MAX_AI_GENERATIONS = 1;

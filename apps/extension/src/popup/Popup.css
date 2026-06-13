@@ -57,14 +57,6 @@ body {
 .rl-logo { color: var(--cyan); font-size: 16px; text-shadow: 0 0 8px var(--cyan); }
 .rl-name { font-weight: 700; letter-spacing: 0.06em; }
 
-.rl-badge {
-  font-family: var(--mono); font-size: 10px; font-weight: 700;
-  border-radius: 3px; padding: 3px 8px; cursor: pointer;
-  border: 1px solid var(--line); background: var(--panel);
-}
-.rl-badge.free { color: var(--muted); }
-.rl-badge.pro { color: #08090d; background: var(--lime); border-color: var(--lime); box-shadow: 0 0 10px rgba(157,255,61,0.4); }
-
 .rl-domainbar {
   display: flex; align-items: center; gap: 8px;
   background: var(--panel); border: 1px solid var(--line);

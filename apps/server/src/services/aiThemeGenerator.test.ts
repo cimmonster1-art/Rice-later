@@ -24,7 +24,6 @@ const input = {
   prompt: "make it cyberpunk",
   hostname: "example.com",
   pageSummary: summary,
-  userTier: "free" as const,
 };
 
 afterEach(() => __setProviderForTests(null));

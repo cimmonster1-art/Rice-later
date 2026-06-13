@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Landing } from "./Landing";
-import { Pricing } from "./Pricing";
 import { Privacy } from "./Privacy";
 import { Terms } from "./Terms";
 import "./styles.css";
@@ -19,8 +18,7 @@ function useHashRoute(): string {
 function App() {
   const hash = useHashRoute();
   let page = <Landing />;
-  if (hash.startsWith("#/pricing")) page = <Pricing />;
-  else if (hash.startsWith("#/privacy")) page = <Privacy />;
+  if (hash.startsWith("#/privacy")) page = <Privacy />;
   else if (hash.startsWith("#/terms")) page = <Terms />;
 
   return (
@@ -28,14 +26,20 @@ function App() {
       <nav className="site-nav">
         <a href="#/" className="brand">◢◤ RiceLayer</a>
         <div className="links">
-          <a href="#/pricing">Pricing</a>
+          <a
+            href="https://github.com/cimmonster1-art/rice-later"
+            target="_blank"
+            rel="noreferrer"
+          >
+            GitHub
+          </a>
           <a href="#/privacy">Privacy</a>
           <a href="#/terms">Terms</a>
         </div>
       </nav>
       {page}
       <footer className="site-footer">
-        <span>RiceLayer · Rice any website without breaking it.</span>
+        <span>RiceLayer · Free &amp; open source · Rice any website without breaking it.</span>
         <span className="muted">CSS-only · Privacy-first · © {new Date().getFullYear()}</span>
       </footer>
     </>

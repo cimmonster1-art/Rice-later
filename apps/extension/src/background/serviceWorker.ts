@@ -9,7 +9,7 @@
  *    scripts shouldn't reach the backend directly).
  */
 
-import { GENERATE_THEME_ENDPOINT, FREE_MAX_AI_GENERATIONS } from "../shared/constants";
+import { GENERATE_THEME_ENDPOINT, PRIORITY_KEY_HEADER } from "../shared/constants";
 import type {
   RiceMessage,
   RiceResponse,
@@ -17,7 +17,7 @@ import type {
 } from "../shared/messages";
 import { parseThemeGenerationResult } from "../shared/themeSchema";
 import { sanitizeCss } from "../shared/cssSanitizer";
-import { getState, updateState } from "../shared/storage";
+import { getState } from "../shared/storage";
 
 const CONTENT_SCRIPT_FILE = "content.js";
 
@@ -52,16 +52,6 @@ async function generateAndApply(
 ): Promise<RiceResponse<GenerateThemeResponse>> {
   const state = await getState();
 
-  if (
-    state.proStatus === "free" &&
-    state.aiGenerationsUsed >= FREE_MAX_AI_GENERATIONS
-  ) {
-    return {
-      ok: false,
-      error: `Free tier includes ${FREE_MAX_AI_GENERATIONS} AI generation. Upgrade to Pro for unlimited.`,
-    };
-  }
-
   // 1. Analyze (value-free structural summary).
   const analysis = await relayToTab(tabId, { type: "ANALYZE_PAGE" });
   if (!analysis.ok) return { ok: false, error: analysis.error };
@@ -72,18 +62,29 @@ async function generateAndApply(
   // 2. Call backend.
   let result;
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    // Optional, owner-only: priority key for a self-hosted backend.
+    if (state.priorityAccessKey?.trim()) {
+      headers[PRIORITY_KEY_HEADER] = state.priorityAccessKey.trim();
+    }
     const resp = await fetch(GENERATE_THEME_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         prompt,
         hostname,
         pageSummary: analysis.data,
-        userTier: state.proStatus,
       }),
     });
     if (!resp.ok) {
-      return { ok: false, error: `Backend error ${resp.status}` };
+      let detail = "";
+      try {
+        const errJson = (await resp.json()) as { error?: string };
+        if (errJson?.error) detail = `: ${errJson.error}`;
+      } catch {
+        /* non-JSON error body */
+      }
+      return { ok: false, error: `Backend error ${resp.status}${detail}` };
     }
     const json = await resp.json();
     result = parseThemeGenerationResult(json);
@@ -106,11 +107,6 @@ async function generateAndApply(
     css: cleanCss,
   });
   if (!applied.ok) return { ok: false, error: applied.error };
-
-  // 5. Track free-tier usage.
-  await updateState((draft) => {
-    draft.aiGenerationsUsed += 1;
-  });
 
   const applyData = applied.data as Omit<GenerateThemeResponse, "result" | "sanitizedRemovals">;
   return {

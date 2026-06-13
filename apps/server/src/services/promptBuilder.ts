@@ -75,5 +75,4 @@ export interface ThemeGenerationInput {
   prompt: string;
   hostname: string;
   pageSummary: PageStructureSummary;
-  userTier: "free" | "pro";
 }
