@@ -54,6 +54,13 @@ export const GENERATE_THEME_ENDPOINT = `${API_BASE_URL}/api/generate-theme`;
 export const STORAGE_KEY = "ricelayer_state_v1";
 
 /**
+ * Max characters for the AI prompt chat box. The popup enforces this hard limit
+ * and the backend rejects anything longer — describe the interface you want in
+ * a single short phrase.
+ */
+export const MAX_PROMPT_LENGTH = 50;
+
+/**
  * Hostname substrings that are treated as sensitive by default.
  * On these pages RiceLayer warns and (per preference) refuses to auto-apply.
  */

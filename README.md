@@ -281,7 +281,9 @@ Before packaging, verify the build in a real browser:
    article, click the RiceLayer icon, pick **Cyberpunk Neon**. The page restyles
    and the Safety panel reports a pass; buttons and links still work.
 4. **Test an AI theme with the backend running:** start `npm run dev:server`,
-   then type a prompt like *"make this dark academia"* and apply. (With no
+   then use the popup chat box to describe the interface you want in **≤ 50
+   characters** (e.g. *"dark academia"*, *"green hacker terminal"*) and apply.
+   The 50-char limit is enforced in the popup and rejected server-side. (With no
    `GEMINI_API_KEY` the mock provider returns a safe theme — useful offline.)
 5. **Test rollback with unsafe CSS:** the safest way to simulate a dangerous
    theme is the automated test `apps/extension/src/content/themeInjector.test.ts`

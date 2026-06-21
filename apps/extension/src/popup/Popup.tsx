@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { PRESETS, getPreset } from "../shared/presets";
-import { APP_NAME } from "../shared/constants";
+import { APP_NAME, MAX_PROMPT_LENGTH } from "../shared/constants";
 import { isSensitiveHost } from "../shared/permissions";
 import type {
   RiceMessage,
@@ -173,13 +173,34 @@ export default function Popup() {
         </div>
       )}
 
+      <div className="rl-section-label rl-mono">describe your interface</div>
       <div className="rl-prompt">
-        <textarea
-          placeholder='e.g. "make this a green hacker terminal"'
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={2}
-        />
+        <div className="rl-chatbox">
+          <textarea
+            className="rl-chatinput"
+            placeholder="e.g. green hacker terminal"
+            value={prompt}
+            maxLength={MAX_PROMPT_LENGTH}
+            onChange={(e) =>
+              setPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void generate();
+              }
+            }}
+            rows={2}
+          />
+          <span
+            className={`rl-charcount ${
+              prompt.length >= MAX_PROMPT_LENGTH ? "max" : ""
+            }`}
+            aria-label="characters used"
+          >
+            {prompt.length}/{MAX_PROMPT_LENGTH}
+          </span>
+        </div>
         <button className="rl-primary" disabled={busy || !prompt.trim()} onClick={generate}>
           {busy ? "…" : "Rice this page"}
         </button>

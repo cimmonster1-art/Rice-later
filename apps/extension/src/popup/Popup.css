@@ -91,12 +91,24 @@ body {
 }
 
 .rl-prompt { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.rl-prompt textarea {
-  width: 100%; resize: vertical; background: var(--panel-2); color: var(--fg);
-  border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px;
+
+/* Chat box: a single short prompt (<= 50 chars) describing the interface. */
+.rl-chatbox {
+  position: relative;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+}
+.rl-chatbox:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(0,240,255,0.3); }
+.rl-chatinput {
+  width: 100%; resize: none; background: transparent; color: var(--fg);
+  border: none; border-radius: 6px; padding: 9px 10px 18px;
   font-family: var(--sans); font-size: 13px; outline: none;
 }
-.rl-prompt textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(0,240,255,0.3); }
+.rl-charcount {
+  position: absolute; right: 8px; bottom: 5px;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.04em; pointer-events: none;
+}
+.rl-charcount.max { color: var(--cyan); }
 
 .rl-primary {
   background: linear-gradient(135deg, var(--cyan), #00b3c4);
