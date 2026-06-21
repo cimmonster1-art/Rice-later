@@ -5,6 +5,11 @@ import {
   FALLBACK_THEME,
   type ThemeAiProvider,
 } from "./geminiThemeGenerator.js";
+import {
+  assertBudgetAvailable,
+  __setSpentForTests,
+  __resetBudgetForTests,
+} from "./geminiBudget.js";
 import type { PageStructureSummary } from "../schemas/theme.js";
 
 const summary: PageStructureSummary = {
@@ -24,7 +29,6 @@ const input = {
   prompt: "make it cyberpunk",
   hostname: "example.com",
   pageSummary: summary,
-  userTier: "free" as const,
 };
 
 afterEach(() => __setProviderForTests(null));
@@ -95,5 +99,23 @@ describe("aiThemeGenerator", () => {
     const out = await generateTheme(input);
     expect(out.usedFallback).toBe(true);
     expect(out.result.css.trim().length).toBeGreaterThan(20);
+  });
+
+  it("serves the safe fallback when the Gemini budget cap is exhausted", async () => {
+    __resetBudgetForTests();
+    __setSpentForTests(20); // simulate the hard $20 cap being reached
+    // A provider that enforces the budget guard the same way Gemini does.
+    const budgeted: ThemeAiProvider = {
+      name: "gemini",
+      async generateTheme() {
+        assertBudgetAvailable(); // throws GeminiBudgetExceededError
+        return { ...FALLBACK_THEME };
+      },
+    };
+    __setProviderForTests(budgeted);
+    const out = await generateTheme(input);
+    expect(out.usedFallback).toBe(true);
+    expect(out.result.css.trim().length).toBeGreaterThan(20);
+    __resetBudgetForTests();
   });
 });

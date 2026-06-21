@@ -38,11 +38,12 @@ export function Terms() {
         adjustment.
       </p>
 
-      <h2>Billing</h2>
+      <h2>Pricing</h2>
       <p>
-        RiceLayer Pro is billed at <strong>$2.99/month</strong>. You can cancel
-        anytime through the billing portal; access continues until the end of
-        the current billing period. Prices are exclusive of applicable taxes.
+        RiceLayer is <strong>free</strong>. There is no paid plan, no
+        subscription, and no billing. AI theme generation is provided at no cost
+        and is bounded by a hard usage cap on our side; if that cap is reached,
+        RiceLayer falls back to its built-in safe themes.
       </p>
 
       <h2>Disclaimer of warranty</h2>

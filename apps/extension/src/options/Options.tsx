@@ -37,7 +37,7 @@ export default function Options() {
           <span className="rl-logo">◢◤</span>
           <span className="rl-name">{APP_NAME} — Options</span>
         </div>
-        <span className={`rl-badge ${state.proStatus}`}>{state.proStatus.toUpperCase()}</span>
+        <span className="rl-badge free">FREE</span>
       </header>
       <p className="rl-mono" style={{ marginTop: 0 }}>{TAGLINE}</p>
 

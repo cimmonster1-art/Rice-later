@@ -5,7 +5,7 @@
  * chrome.storage is unavailable (e.g. unit tests / non-extension context).
  */
 
-import { STORAGE_KEY, FREE_MAX_SAVED_SITES } from "./constants";
+import { STORAGE_KEY } from "./constants";
 import type { SafetyResult } from "./themeSchema";
 
 export interface SiteThemeRecord {
@@ -20,27 +20,22 @@ export interface SiteThemeRecord {
 
 export interface RiceLayerState {
   globalEnabled: boolean;
-  proStatus: "free" | "pro";
   sites: Record<string, SiteThemeRecord>;
   preferences: {
     reducedMotion: boolean;
     autoApplySavedThemes: boolean;
     denySensitiveSites: boolean;
   };
-  /** Count of AI generations used (for free-tier gating). */
-  aiGenerationsUsed: number;
 }
 
 export const DEFAULT_STATE: RiceLayerState = {
   globalEnabled: true,
-  proStatus: "free",
   sites: {},
   preferences: {
     reducedMotion: false,
     autoApplySavedThemes: true,
     denySensitiveSites: true,
   },
-  aiGenerationsUsed: 0,
 };
 
 // In-memory fallback used outside the extension runtime.
@@ -107,18 +102,7 @@ export async function saveSiteTheme(
   const now = new Date().toISOString();
   const existing = state.sites[hostname];
 
-  // Free-tier: limit number of distinct saved sites.
-  if (
-    !existing &&
-    state.proStatus === "free" &&
-    Object.keys(state.sites).length >= FREE_MAX_SAVED_SITES
-  ) {
-    return {
-      ok: false,
-      reason: `Free tier saves ${FREE_MAX_SAVED_SITES} site. Upgrade to Pro for unlimited saved sites.`,
-    };
-  }
-
+  // RiceLayer is fully free: unlimited domain-scoped saved sites.
   state.sites[hostname] = {
     ...record,
     createdAt: existing?.createdAt ?? now,

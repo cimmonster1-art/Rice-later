@@ -10,14 +10,58 @@ import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { mkdirSync, copyFileSync, writeFileSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  copyFileSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+} from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = __dirname;
 const distDir = resolve(root, "../../dist/extension");
 
+const DEFAULT_API_BASE_URL = "http://localhost:8787";
+
+/** Backend base URL injected at build time (empty -> dev default in code). */
+const API_BASE = (process.env.VITE_API_URL ?? "").trim();
+
 function log(msg) {
   console.log(`[extension build] ${msg}`);
+}
+
+/**
+ * Derive a Chrome host-permission match pattern from the backend base URL.
+ * e.g. "https://api.example.com"  -> "https://api.example.com/*"
+ *      "http://localhost:8787"     -> "http://localhost:8787/*"
+ * Falls back to the localhost default if VITE_API_URL is unset or invalid.
+ */
+function hostPermissionFor(apiUrl) {
+  const url = apiUrl && apiUrl.trim() ? apiUrl.trim() : DEFAULT_API_BASE_URL;
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}/*`;
+  } catch {
+    log(`WARNING: VITE_API_URL "${url}" is not a valid URL; using localhost.`);
+    const u = new URL(DEFAULT_API_BASE_URL);
+    return `${u.protocol}//${u.host}/*`;
+  }
+}
+
+/**
+ * Read the source manifest and rewrite host_permissions so the REQUIRED host
+ * permission tracks the configured backend (VITE_API_URL) instead of being
+ * permanently pinned to localhost. Optional host permissions (for per-site
+ * auto-apply) and everything else are preserved verbatim.
+ */
+function buildManifest() {
+  const manifest = JSON.parse(
+    readFileSync(resolve(root, "manifest.json"), "utf8")
+  );
+  const hostPattern = hostPermissionFor(API_BASE);
+  manifest.host_permissions = [hostPattern];
+  return { manifest, hostPattern };
 }
 
 /** Minimal valid 1x1+ PNG generator for placeholder icons. */
@@ -39,6 +83,12 @@ async function run() {
   log("building popup + options (vite)…");
   await viteBuild({ configFile: resolve(root, "vite.config.ts") });
 
+  // Inject the backend base URL (empty string => code falls back to the dev
+  // default). Shared by both bundles and the Vite popup/options build.
+  const define = {
+    __RICELAYER_API_BASE__: JSON.stringify(API_BASE),
+  };
+
   log("bundling content script + service worker (esbuild)…");
   await esbuild({
     entryPoints: { content: resolve(root, "src/content/contentScript.ts") },
@@ -49,6 +99,7 @@ async function run() {
     target: "chrome110",
     minify: true,
     legalComments: "none",
+    define,
   });
   await esbuild({
     entryPoints: { background: resolve(root, "src/background/serviceWorker.ts") },
@@ -59,10 +110,19 @@ async function run() {
     target: "chrome110",
     minify: true,
     legalComments: "none",
+    define,
   });
 
-  log("copying manifest + icons…");
-  copyFileSync(resolve(root, "manifest.json"), resolve(distDir, "manifest.json"));
+  log("writing manifest (env-driven host permissions) + icons…");
+  const { manifest, hostPattern } = buildManifest();
+  writeFileSync(
+    resolve(distDir, "manifest.json"),
+    JSON.stringify(manifest, null, 2) + "\n"
+  );
+  log(
+    `backend: ${API_BASE || `${DEFAULT_API_BASE_URL} (dev default)`} -> ` +
+      `host_permissions: ${hostPattern}`
+  );
   for (const size of [16, 48, 128]) {
     const iconPath = resolve(distDir, `icons/icon${size}.png`);
     const srcIcon = resolve(root, `icons/icon${size}.png`);

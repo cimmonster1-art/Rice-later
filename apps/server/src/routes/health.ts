@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createThemeProvider } from "../services/geminiThemeGenerator.js";
-import { isBillingConfigured } from "../services/stripe.js";
+import { budgetStatus } from "../services/geminiBudget.js";
 
 export const healthRouter = Router();
 
@@ -9,7 +9,8 @@ healthRouter.get("/health", (_req, res) => {
     status: "ok",
     service: "ricelayer-server",
     aiProvider: createThemeProvider().name,
-    billingConfigured: isBillingConfigured(),
+    // RiceLayer is fully free; AI cost is bounded by a hard Gemini spend cap.
+    geminiBudget: budgetStatus(),
     time: new Date().toISOString(),
   });
 });

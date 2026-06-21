@@ -20,7 +20,10 @@ login, cart, and workflow keeps working.
   back automatically** if a theme would break it.
 - ✅ A privacy-first backend that talks to **Google Gemini** for AI themes and
   returns **strict JSON** (CSS only — no JavaScript, ever).
-- ✅ Per-site saved preferences, presets that work with no AI, and a Pro tier.
+- ✅ Per-site saved preferences and presets that work with no AI.
+- ✅ **Fully free** — no paid plan, no subscription, no account. AI generation
+  is bounded by a **hard $20 Gemini spend cap** on the server; once reached, the
+  backend serves a built-in safe theme instead.
 - ❌ Not a website builder, not a page rebuilder, not a scraper. It never
   generates or injects JavaScript and never reads form/password/payment values.
 
@@ -44,9 +47,10 @@ login, cart, and workflow keeps working.
          ▼
 ┌──────────────── Backend (Node + Express, TypeScript) ──────────────────┐
 │  POST /api/generate-theme                                              │
-│   1 entitlement  2 rate limit  3 promptBuilder (privacy-preserving)    │
+│   1 rate limit  2 promptBuilder (privacy-preserving)  3 budget guard   │
 │   4 Gemini (strict JSON)  5 zod validate  6 cssSanitizer  7 return     │
 │  GEMINI_API_KEY is read ONLY here, from process.env — never in browser │
+│  Hard $20 Gemini spend cap (geminiBudget.ts) → safe fallback when hit  │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -62,7 +66,7 @@ apps/
   extension/    MV3 extension (React popup/options, content + background)
     src/
       popup/ options/ background/ content/ shared/
-  server/       Express API, Gemini provider, Stripe scaffold, sanitizer
+  server/       Express API, Gemini provider, budget cap, sanitizer
     src/
       routes/ services/ schemas/ middleware/
   web/          Landing + Pricing + Privacy + Terms (Vite/React)
@@ -90,7 +94,10 @@ passwords, inputs, payment fields, or private messages. See `apps/web/src/Privac
 ## Permission model
 
 - Required: `activeTab`, `scripting`, `storage` — that's it.
-- `host_permissions`: only the backend host (e.g. `http://localhost:8787/*`).
+- `host_permissions`: only the backend host. This is **generated at build time**
+  from `VITE_API_URL` (default `http://localhost:8787/*`; in production it
+  becomes your deployed API origin, e.g. `https://api.ricelayer.app/*`). It is
+  never permanently pinned to localhost.
 - `optional_host_permissions`: `http://*/*`, `https://*/*` — requested **per
   origin, only** when you choose "always apply on this site."
 - No `<all_urls>` in required permissions. The content script is injected after
@@ -131,6 +138,34 @@ npm run dev:extension       # vite dev server for popup/options UI
 If `GEMINI_API_KEY` is missing, the server prints a startup warning and uses the
 **mock provider** (a good cyberpunk theme) so development never blocks.
 
+### Hard $20 Gemini spend cap (fully free, sustainable)
+
+RiceLayer is free for everyone. Real Gemini usage is bounded by a **hard dollar
+cap** (`apps/server/src/services/geminiBudget.ts`):
+
+- Default and **maximum** is `$20` (`GEMINI_BUDGET_USD`; any larger value is
+  clamped down to the `$20` hard cap).
+- Spend is **estimated** from token usage reported by the API, priced via
+  `GEMINI_PRICE_INPUT_PER_MTOK` / `GEMINI_PRICE_OUTPUT_PER_MTOK`.
+- Once the cap is reached the server **stops calling Gemini** and serves the
+  built-in safe fallback theme. Users are never charged and the product keeps
+  working. `GET /api/health` reports the live `geminiBudget` status.
+- The running total is per-process and resets on restart; back it with a shared
+  store (Redis/DB) for multi-instance deployments.
+
+### Backend base URL for the extension (`VITE_API_URL`)
+
+The extension's backend URL is injected at **build time** from `VITE_API_URL`
+and is also used to generate the manifest's required host permission:
+
+```bash
+# Local development (default — no config needed): http://localhost:8787
+npm run build:extension
+
+# Production: point the build at your deployed API BEFORE packaging
+VITE_API_URL=https://api.ricelayer.app npm run release:extension
+```
+
 ---
 
 ## Build & package
@@ -139,8 +174,9 @@ If `GEMINI_API_KEY` is missing, the server prints a startup warning and uses the
 npm run build               # builds extension, server, web -> dist/
 npm run build:extension     # -> dist/extension  (load this unpacked)
 npm run package:extension   # -> dist/ricelayer-extension.zip (Web Store upload)
-npm run test                # vitest (48 tests)
+npm run test                # vitest (77 tests)
 npm run smoke               # builds + safety/permission/sanitizer checks + zip
+npm run release:extension   # lint + build + test + smoke + package (fails loud)
 ```
 
 ### Load the extension in Chrome
@@ -166,37 +202,96 @@ npm run smoke               # builds + safety/permission/sanitizer checks + zip
 
 ---
 
-## Free vs Pro
+## Pricing — free, forever
 
-| | Free | Pro — **$2.99/mo** |
-|---|---|---|
-| Local presets | ✅ all 8 | ✅ |
-| Saved websites | 1 | unlimited |
-| AI prompt-to-theme | 1 trial | unlimited |
-| Per-site auto-apply | — | ✅ |
-| Generated CSS editor | — | ✅ |
-| Theme import/export | — | ✅ |
-| Accessibility / rescue modes | basic | ✅ |
-| Sync-ready storage | — | ✅ |
+RiceLayer is **completely free**. There is no paid plan, no subscription, and no
+account. Every feature — all presets, unlimited AI prompt-to-theme, unlimited
+saved sites, per-site auto-apply, the function-safety validator — is available
+to everyone.
 
-Billing is a Stripe scaffold (`/api/billing/*`) gated behind
-`STRIPE_SECRET_KEY`. Entitlement lives in `services/entitlement.ts` with a clean
-seam for a DB; `DEV_FORCE_TIER=pro` unlocks Pro locally without Stripe.
+To keep that sustainable, AI generation is bounded by the **hard $20 Gemini
+spend cap** described above. When the cap is reached the backend serves built-in
+safe themes instead of calling Gemini.
 
 ---
 
-## Chrome Web Store release checklist
+## Chrome Web Store packaging
 
-- [ ] Replace placeholder icons in `apps/extension/icons/` with real 16/48/128 PNGs.
-- [ ] Set the production backend URL (`VITE_API_URL`) and update
-      `host_permissions` to the deployed API origin.
-- [ ] Bump `version` in `apps/extension/manifest.json`.
-- [ ] `npm run smoke` must pass (minimal permissions, no `<all_urls>`, no eval,
-      no remote scripts, sanitizer catches unsafe CSS).
-- [ ] `npm run package:extension` → upload `dist/ricelayer-extension.zip`.
-- [ ] Provide a privacy policy URL (host `apps/web`) and justify each permission
-      (activeTab/scripting/storage) in the store listing.
-- [ ] Confirm no remote code execution; all logic ships in the package.
+This produces the exact ZIP you upload to the Chrome Web Store.
+
+### Exact commands
+
+```bash
+# 1. Set the production backend URL (baked into the build + manifest host perms)
+export VITE_API_URL=https://api.your-domain.com
+
+# 2. Run the full release gate (lint → build → test → smoke → package)
+npm run release:extension
+```
+
+`release:extension` fails loudly if TypeScript, tests, smoke checks, or
+packaging fail — nothing is hidden.
+
+### Exact output
+
+```
+dist/ricelayer-extension.zip
+```
+
+This is the file you upload to the Web Store. The unpacked build (for local
+testing) is at `dist/extension/`.
+
+### Checklist before upload
+
+- [ ] **Set production `VITE_API_URL`** — `export VITE_API_URL=https://api.your-domain.com`
+      (otherwise the build defaults to `http://localhost:8787` and won't work in production).
+- [ ] **Update/generate production manifest host permissions** — these are
+      generated automatically from `VITE_API_URL` at build time; confirm
+      `dist/extension/manifest.json` → `host_permissions` shows your API origin
+      (e.g. `https://api.your-domain.com/*`), not localhost.
+- [ ] **Replace placeholder icons** in `apps/extension/icons/` with real
+      16/48/128 PNGs (the build generates a cyan placeholder if any are missing).
+- [ ] **Bump `version`** in `apps/extension/manifest.json`.
+- [ ] **Run the release script** — `npm run release:extension` (must pass green).
+- [ ] **Upload `dist/ricelayer-extension.zip`** to the Web Store developer console.
+- [ ] **Provide a privacy policy URL** — host `apps/web` (the `#/privacy` route)
+      and link it in the listing.
+- [ ] **Explain permissions in the store listing** — justify `activeTab`
+      (act only on the tab you click), `scripting` (inject the CSS-only theme
+      after activation), `storage` (save your per-site preferences). Note that
+      broad host access is **optional** and requested per-site only.
+
+### What the store reviewer will see (all enforced by `npm run smoke`)
+
+- Manifest V3, minimal required permissions, **no `<all_urls>`**.
+- No remote scripts, no `eval`, no AI-generated JavaScript.
+- All logic ships inside the package (no remote code execution).
+- AI output is strict JSON / CSS only, sanitized before injection.
+
+---
+
+## Local testing before upload
+
+Before packaging, verify the build in a real browser:
+
+1. **Build the extension:** `npm run build:extension` → output in `dist/extension/`.
+2. **Load unpacked:** open `chrome://extensions`, enable **Developer mode**,
+   click **Load unpacked**, and select `dist/extension`.
+3. **Test a preset theme on a normal website:** open e.g. a docs site or news
+   article, click the RiceLayer icon, pick **Cyberpunk Neon**. The page restyles
+   and the Safety panel reports a pass; buttons and links still work.
+4. **Test an AI theme with the backend running:** start `npm run dev:server`,
+   then type a prompt like *"make this dark academia"* and apply. (With no
+   `GEMINI_API_KEY` the mock provider returns a safe theme — useful offline.)
+5. **Test rollback with unsafe CSS:** the safest way to simulate a dangerous
+   theme is the automated test `apps/extension/src/content/themeInjector.test.ts`
+   (`npm run test`), which feeds `pointer-events:none` / broad `display:none`
+   through the injector and asserts they are stripped and the page is rolled
+   back. You can also watch the Safety panel flip to **BLOCKED** on a hostile
+   site — RiceLayer removes the theme and shows the reason.
+6. **Test save-for-site and reload behavior:** tick **Save for this site**, apply
+   a theme, then reload the page — the saved theme re-applies automatically.
+   Manage or remove saved sites from the extension's **Options** page.
 
 ---
 
@@ -215,7 +310,7 @@ seam for a DB; `DEV_FORCE_TIER=pro` unlocks Pro locally without Stripe.
 ## Roadmap
 
 - Shadow DOM piercing for component-heavy apps.
-- Generated-CSS editor with live diffing (Pro).
+- Generated-CSS editor with live diffing.
 - Cloud sync of saved themes (Supabase seam already in the storage abstraction).
 - Community preset gallery + import/export.
 - Per-element targeted ricing.

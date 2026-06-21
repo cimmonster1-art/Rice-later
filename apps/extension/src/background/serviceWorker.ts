@@ -9,7 +9,7 @@
  *    scripts shouldn't reach the backend directly).
  */
 
-import { GENERATE_THEME_ENDPOINT, FREE_MAX_AI_GENERATIONS } from "../shared/constants";
+import { GENERATE_THEME_ENDPOINT } from "../shared/constants";
 import type {
   RiceMessage,
   RiceResponse,
@@ -17,7 +17,6 @@ import type {
 } from "../shared/messages";
 import { parseThemeGenerationResult } from "../shared/themeSchema";
 import { sanitizeCss } from "../shared/cssSanitizer";
-import { getState, updateState } from "../shared/storage";
 
 const CONTENT_SCRIPT_FILE = "content.js";
 
@@ -50,18 +49,6 @@ async function generateAndApply(
   tabId: number,
   prompt: string
 ): Promise<RiceResponse<GenerateThemeResponse>> {
-  const state = await getState();
-
-  if (
-    state.proStatus === "free" &&
-    state.aiGenerationsUsed >= FREE_MAX_AI_GENERATIONS
-  ) {
-    return {
-      ok: false,
-      error: `Free tier includes ${FREE_MAX_AI_GENERATIONS} AI generation. Upgrade to Pro for unlimited.`,
-    };
-  }
-
   // 1. Analyze (value-free structural summary).
   const analysis = await relayToTab(tabId, { type: "ANALYZE_PAGE" });
   if (!analysis.ok) return { ok: false, error: analysis.error };
@@ -79,7 +66,6 @@ async function generateAndApply(
         prompt,
         hostname,
         pageSummary: analysis.data,
-        userTier: state.proStatus,
       }),
     });
     if (!resp.ok) {
@@ -106,11 +92,6 @@ async function generateAndApply(
     css: cleanCss,
   });
   if (!applied.ok) return { ok: false, error: applied.error };
-
-  // 5. Track free-tier usage.
-  await updateState((draft) => {
-    draft.aiGenerationsUsed += 1;
-  });
 
   const applyData = applied.data as Omit<GenerateThemeResponse, "result" | "sanitizedRemovals">;
   return {

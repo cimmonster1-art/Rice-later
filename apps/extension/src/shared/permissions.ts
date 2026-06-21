@@ -24,7 +24,7 @@ export function originPattern(url: string): string | null {
   }
 }
 
-/** Request optional host permission for a single origin (Pro auto-apply). */
+/** Request optional host permission for a single origin (per-site auto-apply). */
 export async function requestHostPermission(url: string): Promise<boolean> {
   const pattern = originPattern(url);
   if (!pattern || typeof chrome === "undefined" || !chrome.permissions) {

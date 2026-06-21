@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["chrome", "vite/client"],
+    "types": ["chrome", "vite/client", "node"],
     "noEmit": true
   },
   "include": ["src", "build.mjs", "vite.config.ts"]

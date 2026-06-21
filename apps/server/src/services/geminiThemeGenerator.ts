@@ -18,6 +18,7 @@ import {
   buildRepairPrompt,
   type ThemeGenerationInput,
 } from "./promptBuilder.js";
+import { assertBudgetAvailable, recordUsage } from "./geminiBudget.js";
 
 export type { ThemeGenerationInput };
 
@@ -119,6 +120,10 @@ export class GeminiThemeGenerator implements ThemeAiProvider {
   }
 
   private async callModel(promptText: string): Promise<string> {
+    // HARD COST GUARD: refuse to spend beyond the Gemini budget cap. When the
+    // cap is reached this throws and the orchestrator serves the safe fallback.
+    assertBudgetAvailable();
+
     const response = await this.ai.models.generateContent({
       model: this.model,
       contents: [{ role: "user", parts: [{ text: promptText }] }],
@@ -127,6 +132,18 @@ export class GeminiThemeGenerator implements ThemeAiProvider {
         temperature: 0.55,
       },
     });
+
+    // Track estimated spend from reported token usage.
+    const usage = response.usageMetadata;
+    recordUsage({
+      inputTokens: usage?.promptTokenCount ?? 0,
+      outputTokens:
+        usage?.candidatesTokenCount ??
+        (usage?.totalTokenCount && usage?.promptTokenCount
+          ? usage.totalTokenCount - usage.promptTokenCount
+          : 0),
+    });
+
     return response.text ?? "";
   }
 

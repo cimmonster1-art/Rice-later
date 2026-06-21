@@ -1,14 +1,16 @@
 /**
  * POST /api/generate-theme
  *
- * Validates the request, checks entitlement + rate limit, builds a
+ * Validates the request, applies a per-IP rate limit, builds a
  * privacy-preserving prompt, asks the AI provider for strict JSON, validates
  * and sanitizes it, then returns a ThemeGenerationResult.
+ *
+ * RiceLayer is fully free: there is no tier/entitlement check. Cost is bounded
+ * by a hard Gemini spend cap enforced inside the provider.
  */
 import { Router } from "express";
 import { GenerateThemeRequestSchema } from "../schemas/request.js";
 import { generateTheme } from "../services/aiThemeGenerator.js";
-import { resolveTier } from "../services/entitlement.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 
 export const generateThemeRouter = Router();
@@ -26,22 +28,10 @@ generateThemeRouter.post(
       return;
     }
 
-    const { prompt, hostname, pageSummary, userTier } = parsed.data;
-
-    // Entitlement: server is the source of truth; declared tier is advisory.
-    const customerId =
-      typeof req.headers["x-ricelayer-customer"] === "string"
-        ? (req.headers["x-ricelayer-customer"] as string)
-        : undefined;
-    const tier = resolveTier(userTier, customerId);
+    const { prompt, hostname, pageSummary } = parsed.data;
 
     try {
-      const outcome = await generateTheme({
-        prompt,
-        hostname,
-        pageSummary,
-        userTier: tier,
-      });
+      const outcome = await generateTheme({ prompt, hostname, pageSummary });
 
       // Return the validated, sanitized ThemeGenerationResult as the body.
       // (Extra metadata is exposed under non-conflicting keys.)
@@ -51,7 +41,6 @@ generateThemeRouter.post(
           provider: outcome.provider,
           usedFallback: outcome.usedFallback,
           sanitizedRemovals: outcome.sanitizedRemovals,
-          tier,
         },
       });
     } catch (err) {

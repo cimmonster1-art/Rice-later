@@ -31,24 +31,23 @@ describe("storage (per-site themes)", () => {
   });
 
   it("is domain-scoped", async () => {
-    const s = await getState();
-    s.proStatus = "pro"; // allow multiple
-    await setState(s);
     await saveSiteTheme("a.com", { enabled: true, themeName: "A", css: "a{}" });
     await saveSiteTheme("b.com", { enabled: true, themeName: "B", css: "b{}" });
     expect((await getSiteTheme("a.com"))?.themeName).toBe("A");
     expect((await getSiteTheme("b.com"))?.themeName).toBe("B");
   });
 
-  it("enforces free-tier single-site limit", async () => {
-    await saveSiteTheme("first.com", { enabled: true, themeName: "X", css: "x{}" });
-    const res = await saveSiteTheme("second.com", {
-      enabled: true,
-      themeName: "Y",
-      css: "y{}",
-    });
-    expect(res.ok).toBe(false);
-    expect(res.reason).toMatch(/Pro/i);
+  it("allows unlimited saved sites (fully free, no tier limit)", async () => {
+    for (let i = 0; i < 5; i++) {
+      const res = await saveSiteTheme(`site${i}.com`, {
+        enabled: true,
+        themeName: `T${i}`,
+        css: `s${i}{}`,
+      });
+      expect(res.ok).toBe(true);
+    }
+    const s = await getState();
+    expect(Object.keys(s.sites)).toHaveLength(5);
   });
 
   it("toggles enabled and removes themes", async () => {
@@ -62,7 +61,6 @@ describe("storage (per-site themes)", () => {
   it("returns default state shape when empty", async () => {
     const s = await getState();
     expect(s.globalEnabled).toBe(DEFAULT_STATE.globalEnabled);
-    expect(s.proStatus).toBe("free");
     expect(s.preferences.denySensitiveSites).toBe(true);
   });
 });

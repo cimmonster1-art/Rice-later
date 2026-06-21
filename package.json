@@ -17,11 +17,13 @@
     "build:server": "npm run build --workspace apps/server",
     "build:web": "npm run build --workspace apps/web",
     "build": "npm run build:extension && npm run build:server && npm run build:web",
-    "lint": "tsc -b --pretty apps/extension apps/server apps/web || true",
+    "lint": "tsc -b --pretty apps/extension apps/server apps/web",
+    "typecheck": "tsc -b --pretty apps/extension apps/server apps/web",
     "test": "vitest run",
     "test:watch": "vitest",
     "package:extension": "node scripts/package-extension.mjs",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "release:extension": "npm run lint && npm run build && npm run test && npm run smoke && npm run package:extension"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
