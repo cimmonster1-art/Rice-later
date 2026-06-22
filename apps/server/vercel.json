@@ -4,6 +4,7 @@
   "buildCommand": "echo 'No build step — Vercel bundles api/index.ts directly'",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/privacypolicy", "destination": "/privacypolicy.html" }
   ]
 }
