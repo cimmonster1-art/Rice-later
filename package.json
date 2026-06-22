@@ -23,12 +23,15 @@
     "test:watch": "vitest",
     "package:extension": "node scripts/package-extension.mjs",
     "smoke": "node scripts/smoke-test.mjs",
+    "assets": "node scripts/generate-store-assets.mjs",
     "release:extension": "npm run lint && npm run build && npm run test && npm run smoke && npm run package:extension"
   },
   "devDependencies": {
+    "esbuild": "^0.21.5",
+    "jsdom": "^24.1.1",
+    "playwright": "^1.61.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
-    "jsdom": "^24.1.1"
+    "vitest": "^2.0.5"
   },
   "engines": {
     "node": ">=18.18.0"
