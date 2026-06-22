@@ -5,11 +5,25 @@ clear review. Copy each block into the field named in **bold**. Nothing here is
 "broken" — this is the standard CWS review asking you to justify permissions and
 finish the listing.
 
-> Assets to upload live next to this file:
-> - `screenshots/` — 1280×800 PNGs (the store accepts 1280×800 or 640×400)
-> - `promo/ricelayer-promo.webm` — upload to YouTube, then paste the YouTube URL
->   into the listing's **Promotional video** field (the store links a YouTube
->   video; it does not host an uploaded file)
+> Assets to upload live next to this file. **All PNGs are 24-bit RGB with no
+> alpha** (what the store requires):
+> - `tiles/store-icon-128.png` — 128×128 store icon
+> - `screenshots/` — 1280×800 PNGs (store accepts 1280×800 or 640×400, max 5)
+> - `tiles/small-promo-tile-440x280.png` — 440×280 small promo tile
+> - `tiles/marquee-promo-tile-1400x560.png` — 1400×560 marquee promo tile
+> - `promo/ricelayer-promo.mp4` (and `.webm`) — upload to YouTube, then paste the
+>   YouTube URL into **Promotional video** (the store links YouTube; it does not
+>   host an uploaded file)
+
+### Field → exact file
+
+| Store field | Spec | File to drop in |
+| --- | --- | --- |
+| Store icon | 128×128 | `tiles/store-icon-128.png` |
+| Screenshots (1–5) | 1280×800, 24-bit PNG no alpha | `screenshots/hero-cyberpunk.png`, `hero-hacker.png`, `themed-cyberpunk-neon.png`, `themed-high-contrast-rescue.png`, `themed-glass-saas.png` |
+| Small promo tile | 440×280, no alpha | `tiles/small-promo-tile-440x280.png` |
+| Marquee promo tile | 1400×560, no alpha | `tiles/marquee-promo-tile-1400x560.png` |
+| Global promo video | YouTube URL | upload `promo/ricelayer-promo.mp4` to YouTube, paste link |
 
 ---
 

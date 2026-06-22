@@ -3,7 +3,11 @@
  *
  * Produces, under ./marketing:
  *   screenshots/  1280x800 PNGs ready for the Web Store listing
- *   promo/        a screen-recorded promo video (webm) ready for YouTube
+ *   tiles/        store icon (128) + small (440x280) & marquee (1400x560) tiles
+ *   promo/        a screen-recorded promo video (webm + mp4) ready for YouTube
+ *
+ * All PNGs are flattened to 24-bit RGB (NO alpha) to satisfy the Web Store's
+ * "24-bit PNG (no alpha)" requirement. The webm is also transcoded to mp4.
  *
  * Everything is rendered with the *real* extension assets:
  *   - the actual preset CSS from apps/extension/src/shared/presets.ts
@@ -14,16 +18,26 @@
  */
 import { chromium } from "playwright";
 import esbuild from "esbuild";
+import ffmpegPath from "ffmpeg-static";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, resolve } from "node:path";
-import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import {
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  readdirSync,
+} from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const out = resolve(root, "marketing");
 const shotsDir = resolve(out, "screenshots");
+const tilesDir = resolve(out, "tiles");
 const promoDir = resolve(out, "promo");
 mkdirSync(shotsDir, { recursive: true });
+mkdirSync(tilesDir, { recursive: true });
 mkdirSync(promoDir, { recursive: true });
 
 const W = 1280;
@@ -221,6 +235,82 @@ function stageHtml(popupInner) {
   <svg id="cursor" viewBox="0 0 24 24" fill="#fff"><path d="M4 2l16 9-7 1.6L9.8 20 4 2z" stroke="#000" stroke-width="1"/></svg>
   <div id="cap"></div>
   </body></html>`;
+}
+
+/* ----------------------------------------------------------------------------
+ * 3b. Branded store icon + promo tiles
+ * ------------------------------------------------------------------------- */
+const BRAND_BG = `
+  radial-gradient(120% 120% at 0% 0%, #10233a 0%, #0a0c12 55%),
+  linear-gradient(135deg, #0a0c12, #0c1626)`;
+
+/** Square store icon (128x128 on the canvas, rendered @4x for crispness). */
+function iconHtml() {
+  return /* html */ `<!doctype html><html><head><meta charset="utf-8"><style>
+  *{box-sizing:border-box;margin:0}
+  html,body{width:512px;height:512px;background:#0a0c12}
+  .ic{width:512px;height:512px;display:flex;align-items:center;justify-content:center;
+      background:${BRAND_BG};position:relative;overflow:hidden}
+  .ic::before{content:"";position:absolute;inset:0;
+      background-image:linear-gradient(rgba(0,240,255,.06) 2px,transparent 2px),
+        linear-gradient(90deg,rgba(0,240,255,.06) 2px,transparent 2px);
+      background-size:64px 64px}
+  .glyph{position:relative;font:800 300px/1 "Segoe UI",Inter,system-ui,sans-serif;
+      color:#00f0ff;text-shadow:0 0 36px rgba(0,240,255,.65);letter-spacing:-8px}
+  .ring{position:absolute;width:340px;height:340px;border-radius:30%;
+      border:6px solid rgba(0,240,255,.25);box-shadow:0 0 60px rgba(0,240,255,.25) inset}
+  </style></head><body>
+  <div class="ic"><div class="ring"></div><div class="glyph">◢◤</div></div>
+  </body></html>`;
+}
+
+/** Shared promo-tile body. `size`: "small" | "marquee". */
+function tileHtml(size) {
+  const small = size === "small";
+  return /* html */ `<!doctype html><html><head><meta charset="utf-8"><style>
+  *{box-sizing:border-box;margin:0}
+  html,body{width:100%;height:100%;font-family:Inter,system-ui,"Segoe UI",sans-serif;background:#0a0c12}
+  .tile{width:100%;height:100%;position:relative;overflow:hidden;background:${BRAND_BG};
+        display:flex;align-items:center;color:#eaf6ff;
+        padding:${small ? "26px 30px" : "0 70px"}}
+  .tile::before{content:"";position:absolute;inset:0;
+        background-image:linear-gradient(rgba(0,240,255,.05) 1px,transparent 1px),
+          linear-gradient(90deg,rgba(0,240,255,.05) 1px,transparent 1px);
+        background-size:${small ? "26px 26px" : "40px 40px"}}
+  .glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5}
+  .g1{width:300px;height:300px;background:#00f0ff;right:-60px;top:-80px}
+  .g2{width:260px;height:260px;background:#ff3df0;left:-80px;bottom:-90px;opacity:.35}
+  .inner{position:relative;z-index:2;${small ? "" : "max-width:60%"}}
+  .brand{display:flex;align-items:center;gap:${small ? "10px" : "16px"};margin-bottom:${small ? "10px" : "20px"}}
+  .logo{color:#00f0ff;text-shadow:0 0 18px #00f0ff;font-size:${small ? "26px" : "46px"}}
+  .name{font-weight:800;letter-spacing:.04em;font-size:${small ? "26px" : "48px"}}
+  .tag{font-weight:700;line-height:1.1;font-size:${small ? "19px" : "44px"};
+       margin-bottom:${small ? "8px" : "18px"}}
+  .tag b{color:#00f0ff}
+  .sub{color:#9fc7d6;font-size:${small ? "12.5px" : "22px"};font-weight:500}
+  .chips{display:flex;gap:${small ? "6px" : "12px"};margin-top:${small ? "12px" : "26px"};flex-wrap:wrap}
+  .chip{border:1px solid rgba(0,240,255,.4);border-radius:999px;
+        padding:${small ? "4px 9px" : "8px 18px"};font-size:${small ? "11px" : "18px"};
+        color:#9df0ff;background:rgba(0,240,255,.06)}
+  .free{position:absolute;top:${small ? "18px" : "34px"};right:${small ? "20px" : "44px"};z-index:3;
+        border:1px solid rgba(157,255,61,.5);color:#9dff3d;border-radius:6px;
+        padding:${small ? "3px 8px" : "6px 14px"};font:700 ${small ? "11px" : "18px"} "JetBrains Mono",monospace;
+        background:rgba(157,255,61,.07)}
+  </style></head><body>
+  <div class="tile">
+    <div class="glow g1"></div><div class="glow g2"></div>
+    <div class="free">FREE</div>
+    <div class="inner">
+      <div class="brand"><span class="logo">◢◤</span><span class="name">RiceLayer</span></div>
+      <div class="tag">Rice any website<br><b>without breaking it.</b></div>
+      <div class="sub">CSS-only themes from a prompt or preset · functionality preserved</div>
+      ${
+        small
+          ? ""
+          : `<div class="chips"><span class="chip">Cyberpunk Neon</span><span class="chip">Hacker Terminal</span><span class="chip">Dark Academia</span><span class="chip">Glass SaaS</span><span class="chip">High Contrast Rescue</span></div>`
+      }
+    </div>
+  </div></body></html>`;
 }
 
 /* ----------------------------------------------------------------------------
@@ -494,11 +584,114 @@ async function main() {
   await setCap("<b>RiceLayer</b> — change how a site looks, never how it works.");
   await sleep(1900);
 
+  const videoHandle = vp.video();
   await vp.close();
   await ctx.close(); // finalizes the webm
+  const rawVideoPath = videoHandle ? await videoHandle.path() : null;
+
+  /* ---------- D. Store icon + promo tiles ---------- */
+  // 128x128 store icon, rendered at 512 then downscaled in the flatten pass.
+  const iconPage = await browser.newPage({
+    viewport: { width: 512, height: 512 },
+  });
+  await iconPage.setContent(iconHtml());
+  await iconPage.waitForTimeout(150);
+  await iconPage.screenshot({ path: resolve(tilesDir, "_store-icon-512.png") });
+  await iconPage.close();
+
+  // 440x280 small promo tile
+  const smallPage = await browser.newPage({
+    viewport: { width: 440, height: 280 },
+    deviceScaleFactor: 2,
+  });
+  await smallPage.setContent(tileHtml("small"));
+  await smallPage.waitForTimeout(150);
+  await smallPage.screenshot({ path: resolve(tilesDir, "_small-promo-880.png") });
+  await smallPage.close();
+
+  // 1400x560 marquee promo tile
+  const marqueePage = await browser.newPage({
+    viewport: { width: 1400, height: 560 },
+  });
+  await marqueePage.setContent(tileHtml("marquee"));
+  await marqueePage.waitForTimeout(150);
+  await marqueePage.screenshot({
+    path: resolve(tilesDir, "_marquee-promo-1400.png"),
+  });
+  await marqueePage.close();
+
   await browser.close();
 
+  /* ---------- E. ffmpeg post-process: no-alpha PNGs + mp4 ---------- */
+  postProcess(rawVideoPath);
+
   console.log("Marketing assets written to ./marketing");
+}
+
+/**
+ * Chrome Web Store requires "24-bit PNG (no alpha)" and links a YouTube video.
+ * Flatten every PNG onto an opaque background (drops the alpha channel) and
+ * resize the oversized icon/tiles to their exact canvas sizes. Also transcode
+ * the recorded webm to a widely-compatible mp4 (h264/yuv420p).
+ */
+function postProcess(rawVideoPath) {
+  const ff = (args) =>
+    execFileSync(ffmpegPath, ["-y", "-loglevel", "error", ...args], {
+      stdio: "inherit",
+    });
+
+  // 1) Flatten all listing screenshots in place (24-bit RGB, no alpha).
+  for (const f of readdirSync(shotsDir).filter((f) => f.endsWith(".png"))) {
+    const p = resolve(shotsDir, f);
+    ff(["-i", p, "-pix_fmt", "rgb24", "-frames:v", "1", p + ".tmp.png"]);
+    rmSync(p);
+    execFileSync("mv", [p + ".tmp.png", p]);
+  }
+
+  // 2) Icon + tiles: scale to exact size, flatten over solid bg, drop alpha.
+  const tileJobs = [
+    ["_store-icon-512.png", "store-icon-128.png", 128, 128],
+    ["_small-promo-880.png", "small-promo-tile-440x280.png", 440, 280],
+    ["_marquee-promo-1400.png", "marquee-promo-tile-1400x560.png", 1400, 560],
+  ];
+  for (const [src, dst, w, h] of tileJobs) {
+    const s = resolve(tilesDir, src);
+    const d = resolve(tilesDir, dst);
+    ff([
+      "-i",
+      s,
+      "-vf",
+      `scale=${w}:${h}:flags=lanczos,format=rgb24`,
+      "-frames:v",
+      "1",
+      d,
+    ]);
+    rmSync(s);
+  }
+
+  // 3) Transcode the promo webm -> mp4, and keep a clean-named webm copy.
+  if (rawVideoPath) {
+    const webmOut = resolve(promoDir, "ricelayer-promo.webm");
+    const mp4Out = resolve(promoDir, "ricelayer-promo.mp4");
+    execFileSync("cp", [rawVideoPath, webmOut]);
+    rmSync(rawVideoPath, { force: true });
+    ff([
+      "-i",
+      webmOut,
+      "-c:v",
+      "libx264",
+      "-pix_fmt",
+      "yuv420p",
+      "-profile:v",
+      "high",
+      "-crf",
+      "20",
+      "-movflags",
+      "+faststart",
+      "-an",
+      mp4Out,
+    ]);
+  }
 }
 
 main().catch((e) => {
