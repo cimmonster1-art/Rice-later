@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "buildCommand": "echo 'No build step — Vercel bundles api/index.ts directly'",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api" }
   ]
