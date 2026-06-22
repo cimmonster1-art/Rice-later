@@ -2,7 +2,7 @@ export function Privacy() {
   return (
     <main className="page legal">
       <h1>Privacy Policy</h1>
-      <p className="muted">Last updated: 2026-06-13</p>
+      <p className="muted">Last updated: 2026-06-22</p>
 
       <p>
         RiceLayer is built privacy-first. Our core promise is that we change how
@@ -53,6 +53,20 @@ export function Privacy() {
         <li>Per-site enable/disable.</li>
         <li>Sensitive pages (banking/login/health) are protected by default.</li>
       </ul>
+
+      <h2>Third-party services</h2>
+      <p>
+        AI themes are generated via Google's Gemini API, which receives the
+        value-free structural summary and your prompt and returns CSS only. Your
+        use of that feature is subject to Google's Privacy Policy. We use no
+        analytics, advertising, or tracking third parties.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions about this policy or your data:{" "}
+        <a href="mailto:cimmonster1@gmail.com">cimmonster1@gmail.com</a>.
+      </p>
     </main>
   );
 }
