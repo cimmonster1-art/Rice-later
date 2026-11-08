@@ -1,5 +1,7 @@
 # RiceLayer
 
+[Project overview](PROJECT_OVERVIEW.md) · [Charli Myers portfolio](https://cimmonster1-art.github.io/)
+
 **Rice any website without breaking it.**
 
 RiceLayer is "ricing for web interfaces." Click the extension, type a
